@@ -112,18 +112,35 @@ class Categoria(models.Model):
 # DOCUMENTO
 # -------------------------
 
+#class Documento(models.Model):
+
+ #   data_insercao = models.DateTimeField(auto_now_add=True)
+
+  #  categorias = models.ManyToManyField(
+  #      Categoria,
+  #      through='CategoriaDocumento'
+ #   )
+
+  #  def __str__(self):
+  #      return f"Documento {self.id}"
+    
 class Documento(models.Model):
+    nome = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    arquivo = models.FileField(
+        upload_to="documentos/",
+        null=True,
+        blank=True
+    )
 
     data_insercao = models.DateTimeField(auto_now_add=True)
 
-    categorias = models.ManyToManyField(
-        Categoria,
-        through='CategoriaDocumento'
-    )
-
     def __str__(self):
-        return f"Documento {self.id}"
-
+        return self.nome if self.nome else f"Documento {self.id}"
 
 # -------------------------
 # RELAÇÃO DOCUMENTO-CATEGORIA
