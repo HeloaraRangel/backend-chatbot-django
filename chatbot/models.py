@@ -4,40 +4,54 @@ from django.db import models
 
 
 from django.db import models
+from django.contrib.auth.hashers import make_password, check_password
 
 
 # -------------------------
 # PERFIL DE ACESSO
 # -------------------------
 
-class PerfilAcesso(models.Model):
+class PerfilDeAcesso(models.Model):
+    id_perfil = models.AutoField(primary_key=True)
     descricao_perfil = models.CharField(max_length=50)
 
     def __str__(self):
         return self.descricao_perfil
 
 
-# -------------------------
-# USUARIO
-# -------------------------
-
 class Usuario(models.Model):
+    id_usuario = models.AutoField(primary_key=True)
 
     perfil = models.ForeignKey(
-        PerfilAcesso,
-        on_delete=models.CASCADE
+        PerfilDeAcesso,
+        on_delete=models.CASCADE,
+        related_name="usuarios"
     )
 
     nome = models.CharField(max_length=100)
-    email = models.CharField(max_length=150)
+
+    email = models.EmailField(
+        max_length=150,
+        unique=True
+    )
+
     senha = models.CharField(max_length=255)
 
     data_cadastro = models.DateTimeField(auto_now_add=True)
-    ultimo_acesso = models.DateTimeField(null=True, blank=True)
+
+    ultimo_acesso = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    def set_senha(self, senha):
+        self.senha = make_password(senha)
+
+    def check_senha(self, senha):
+        return check_password(senha, self.senha)
 
     def __str__(self):
         return self.nome
-
 
 # -------------------------
 # PERGUNTA

@@ -6,7 +6,7 @@ from django.contrib import admin
 
 from .models import (
     Usuario,
-    PerfilAcesso,
+    PerfilDeAcesso,
     Pergunta,
     Resposta,
     Conversa,
@@ -16,7 +16,7 @@ from .models import (
 )
 
 admin.site.register(Usuario)
-admin.site.register(PerfilAcesso)
+admin.site.register(PerfilDeAcesso)
 admin.site.register(Pergunta)
 admin.site.register(Resposta)
 admin.site.register(Conversa)

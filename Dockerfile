@@ -1,0 +1,30 @@
+# Imagem base do Python
+FROM python:3.11-slim
+
+# Variáveis para evitar arquivos desnecessários
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Diretório de trabalho
+WORKDIR /app
+
+# Instalar dependências do sistema
+RUN apt-get update && apt-get install -y \
+    gcc \
+    libpq-dev
+
+# Copiar requirements
+COPY requirements.txt .
+
+# Instalar dependências Python
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+
+# Copiar código do projeto
+COPY . .
+
+# Porta do Django
+EXPOSE 8000
+
+# Comando padrão
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
