@@ -8,9 +8,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_yasg.utils import swagger_auto_schema
 
-from .models import Pergunta, Conversa
-from .serializers import PerguntaSerializer
-from .serializers import ConversaSerializer
 
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -20,6 +17,15 @@ from django.utils import timezone
 
 from .models import Usuario, PerfilDeAcesso
 from .serializers import UsuarioSerializer, PerfilSerializer
+
+from .serializers import PerguntarSerializer
+
+from .models import Pergunta, Conversa, Resposta
+from .serializers import (
+    PerguntaSerializer,
+    ConversaSerializer,
+    RespostaSerializer
+)
 
 
 class DocumentoViewSet(viewsets.ModelViewSet):
@@ -80,58 +86,73 @@ class UsuarioViewSet(viewsets.ModelViewSet):
 
 
 
+
+# -------------------------
+# PERGUNTAS
+# -------------------------
+
 class PerguntaViewSet(viewsets.ModelViewSet):
-    queryset = Pergunta.objects.all()
+
+    queryset = Pergunta.objects.all().order_by('-id_pergunta')
     serializer_class = PerguntaSerializer
 
 
-    
-    
+# -------------------------
+# CONVERSAS
+# -------------------------
+
 class ConversaViewSet(viewsets.ModelViewSet):
-    queryset = Conversa.objects.all()
+
+    queryset = Conversa.objects.all().order_by('-id_conversa')
     serializer_class = ConversaSerializer
 
-#class ConversaViewSet(viewsets.ViewSet):
 
- #   @swagger_auto_schema(
-  #      request_body=PerguntaSerializer
-   # )
-    #@action(
-    #    detail=False,
-   #     methods=['post'],
-   #     url_path='pergunta'
-   # )
-  #  def pergunta(self, request):
-#
-   #     serializer = PerguntaSerializer(data=request.data)
-#
-   #     if serializer.is_valid():
-      #      serializer.save()
+# -------------------------
+# ENDPOINT PRINCIPAL DO CHAT
+# -------------------------
 
-      #      return Response(
-      #          {
-   #                 "mensagem": "Pergunta salva com sucesso",
-     #               "pergunta": serializer.data
-      #          },
-       #         status=status.HTTP_201_CREATED
-        #    )
+from rest_framework.views import APIView
 
-      #  return Response(
-        #    serializer.errors,
-        #    status=status.HTTP_400_BAD_REQUEST
-      #  )
-  
-    # -------------------------
-    # LISTAR CONVERSAS
-    # -------------------------
 
-    def list(self, request):
+class PerguntarAPIView(APIView):
 
-        conversas = Conversa.objects.all()
+    def post(self, request):
 
-        serializer = ConversaSerializer(
-            conversas,
-            many=True
+        serializer = PerguntarSerializer(
+            data=request.data
         )
 
-        return Response(serializer.data)
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        texto = serializer.validated_data["texto"]
+
+        # cria conversa
+        conversa = Conversa.objects.create()
+
+        # cria pergunta
+        pergunta = Pergunta.objects.create(
+            texto_pergunta=texto,
+            conversa=conversa
+        )
+
+        # resposta temporária (mock)
+        resposta_texto = (
+            "Resposta automática temporária. "
+            "Depois será gerada pelo NLP/RAG."
+        )
+
+        resposta = Resposta.objects.create(
+            texto_resposta=resposta_texto,
+            pergunta=pergunta
+        )
+
+        return Response({
+
+            "conversa_id": conversa.id_conversa,
+            "pergunta": pergunta.texto_pergunta,
+            "resposta": resposta.texto_resposta
+        })

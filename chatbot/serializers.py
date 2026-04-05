@@ -4,11 +4,13 @@ from .models import Pergunta
 from .models import Conversa
 from .models import PerfilDeAcesso
 from .models import Usuario
+from django.contrib.auth.hashers import make_password
+from .models import Pergunta, Resposta, Conversa
 
 class DocumentoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Documento
-        fields = ['id', 'nome', 'arquivo', 'data_insercao']
+        fields = '__all__'
         
 
 class PerfilSerializer(serializers.ModelSerializer):
@@ -19,47 +21,51 @@ class PerfilSerializer(serializers.ModelSerializer):
 
 class UsuarioSerializer(serializers.ModelSerializer):
 
-    senha = serializers.CharField(write_only=True)
-
     class Meta:
         model = Usuario
-        fields = [
-            'id_usuario',
-            'perfil',
-            'nome',
-            'email',
-            'senha',
-            'data_cadastro',
-            'ultimo_acesso'
-        ]
-
-        read_only_fields = [
-            'data_cadastro',
-            'ultimo_acesso'
-        ]
+        fields = '__all__'
 
     def create(self, validated_data):
-        senha = validated_data.pop("senha")
+        senha = validated_data.pop('senha')
 
         usuario = Usuario(**validated_data)
-        usuario.set_senha(senha)
+        usuario.senha = make_password(senha)
+
         usuario.save()
 
         return usuario
 
 
 
-class PerguntaSerializer(serializers.ModelSerializer):
+class PerguntarSerializer(serializers.Serializer):
 
+    texto = serializers.CharField(
+        max_length=1000,
+        help_text="Digite a pergunta do usuário"
+    )
+
+
+class PerguntaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pergunta
-        fields = '__all__' 
+        fields = '__all__'
+
+
+class RespostaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Resposta
+        fields = '__all__'
+
 
 class ConversaSerializer(serializers.ModelSerializer):
 
+    perguntas = PerguntaSerializer(
+        many=True,
+        read_only=True
+    )
+
     class Meta:
         model = Conversa
-        fields = '__all__'       
-        
+        fields = '__all__'
         
         
