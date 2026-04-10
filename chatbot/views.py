@@ -15,8 +15,8 @@ from rest_framework.response import Response
 
 from django.utils import timezone
 
-from .models import Usuario, PerfilDeAcesso
-from .serializers import UsuarioSerializer, PerfilSerializer
+from .models import Usuario
+from .serializers import UsuarioSerializer
 
 from .serializers import PerguntarSerializer
 
@@ -32,11 +32,6 @@ class DocumentoViewSet(viewsets.ModelViewSet):
     queryset = Documento.objects.all()
     serializer_class = DocumentoSerializer
     parser_classes = (MultiPartParser, FormParser)
-
-
-class PerfilViewSet(viewsets.ModelViewSet):
-    queryset = PerfilDeAcesso.objects.all()
-    serializer_class = PerfilSerializer
 
 
 class UsuarioViewSet(viewsets.ModelViewSet):
@@ -61,7 +56,6 @@ class UsuarioViewSet(viewsets.ModelViewSet):
                 return Response({
                     "mensagem": "Login realizado com sucesso",
                     "usuario": usuario.nome,
-                    "perfil": usuario.perfil.descricao_perfil
                 })
 
             else:

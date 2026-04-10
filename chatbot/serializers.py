@@ -2,7 +2,6 @@ from rest_framework import serializers
 from .models import Documento
 from .models import Pergunta
 from .models import Conversa
-from .models import PerfilDeAcesso
 from .models import Usuario
 from django.contrib.auth.hashers import make_password
 from .models import Pergunta, Resposta, Conversa
@@ -11,13 +10,7 @@ class DocumentoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Documento
         fields = '__all__'
-        
-
-class PerfilSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PerfilDeAcesso
-        fields = '__all__'
-        
+                
 
 class UsuarioSerializer(serializers.ModelSerializer):
 

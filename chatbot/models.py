@@ -6,12 +6,6 @@ from django.contrib.auth.hashers import make_password, check_password
 # PERFIL DE ACESSO
 # -------------------------
 
-class PerfilDeAcesso(models.Model):
-    id_perfil = models.AutoField(primary_key=True)
-    descricao_perfil = models.CharField(max_length=50)
-
-    def __str__(self):
-        return self.descricao_perfil
 
 
 # -------------------------
@@ -21,14 +15,14 @@ class PerfilDeAcesso(models.Model):
 class Usuario(models.Model):
     id_usuario = models.AutoField(primary_key=True)
 
-    perfil = models.ForeignKey(
-        PerfilDeAcesso,
-        on_delete=models.CASCADE
-    )
-
     nome = models.CharField(max_length=100)
     email = models.CharField(max_length=150)
     senha = models.CharField(max_length=255)
+    
+    # NOVO CAMPO
+    admin = models.BooleanField(
+        default=False
+    )
 
     data_cadastro = models.DateTimeField(auto_now_add=True)
     ultimo_acesso = models.DateTimeField(null=True, blank=True)
