@@ -20,6 +20,9 @@ COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
+# Baixa o modelo do SpaCy durante o build
+RUN python -m spacy download pt_core_news_md
+
 # Copiar código do projeto
 COPY . .
 

@@ -82,9 +82,22 @@ class Categoria(models.Model):
 class Documento(models.Model):
     id_documento = models.AutoField(primary_key=True)
 
-    nome = models.CharField(max_length=255, null=True, blank=True)
+    nome = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
 
-    data_insercao = models.DateTimeField(auto_now_add=True)
+    arquivo = models.FileField(
+        upload_to="documentos/",
+        
+        null=True,
+        blank=True
+    )
+
+    data_insercao = models.DateTimeField(
+        auto_now_add=True
+    )
 
     def __str__(self):
         return self.nome if self.nome else f"Documento {self.id_documento}"
@@ -213,6 +226,14 @@ class Chunk(models.Model):
         on_delete=models.CASCADE,
         related_name="chunks"
     )
+    
+    vetor = models.JSONField(
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return f"Chunk {self.id_chunk}"
 
 
 # -------------------------
