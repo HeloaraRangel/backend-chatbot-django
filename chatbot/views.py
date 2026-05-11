@@ -130,76 +130,132 @@ class PerguntaViewSet(viewsets.ModelViewSet):
 
     def _criar_via_chatbot(self, request):
         """Lógica do Chatbot com RAG PDF + fallback NLP"""
-        
+
         texto = request.data.get("texto")
+
         if not texto:
-            return Response({"erro": "Campo 'texto' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"erro": "Campo 'texto' é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         usuario, _ = Usuario.objects.get_or_create(
             email="anonimo@chatbot.local",
             defaults={"nome": "Usuário Anônimo"}
         )
-    
-        #  1. Tenta buscar no PDF vetorizado (RAG)
-        # Pega todos os chunks relevantes em vez de limitar a apenas 3.
-        context_chunks = buscar_chunks_rag(texto, top_k=None, score_minimo=0.40)
-        
+
+        # =====================================================
+        # 1. BUSCA RAG
+        # =====================================================
+
+        context_chunks = buscar_chunks_rag(
+            texto,
+            top_k=20,
+            score_minimo=0.30
+        )
+
+        # =====================================================
+        # 2. SE ENCONTROU CHUNKS -> USA LLM
+        # =====================================================
+
         if context_chunks:
+
             contexto_rag = "\n\n".join(context_chunks)
+            
+            print(f"📚 Chunks encontrados para RAG: {contexto_rag}")
 
             prompt = f"""
-        Você é um assistente que responde perguntas usando APENAS o contexto abaixo.
+            Você é um assistente que responde perguntas usando APENAS o contexto abaixo.
 
-        Contexto:
-        {contexto_rag}
+            Regras:
+            - Responda de forma objetiva
+            - Nunca invente informações
+            - Nunca misture informações de chunks diferentes
+            - Se houver datas, copie exatamente
+            - Se não encontrar a resposta, diga:
+            "Não encontrei essa informação no documento."
 
-        Pergunta:
-        {texto}
+            Contexto:
+            {contexto_rag}
 
-        Regras:
-        - Responda de forma objetiva
-        - Se houver número, informe claramente
-        - Se não encontrar, diga que não encontrou
-        """
+            Pergunta:
+            {texto}
+            """
+
+            print("🚀 Enviando prompt para LLM...")
 
             try:
+
                 resposta_texto = chamar_api_chat(prompt)
 
-            except Exception:
-                resposta_texto = contexto_rag[:1500] 
-            intencao_saida = "RAG_GPT"
-            
+                print("✅ Resposta da LLM:")
+                print(resposta_texto)
+
+                intencao_saida = "RAG_GPT"
+
+            except Exception as e:
+
+                print("❌ Erro ao chamar LLM:")
+                print(str(e))
+
+                # fallback simples
+                resposta_texto = contexto_rag[:1500]
+
+                intencao_saida = "RAG_GPT"
+
+        # =====================================================
+        # 3. FALLBACK NLP
+        # =====================================================
+
         else:
-            #  Fallback: usa NLP tradicional com edital.txt
-            print(f" Sem chunks relevantes. Usando NLP tradicional para: '{texto}'")
-            
+
+            print(f"📚 Sem chunks relevantes. Usando NLP tradicional para: '{texto}'")
+
             if not base_manager.carregado:
                 base_manager.carregar(CAMINHO_BASE)
-            
+
             resultado_nlp = analisar_texto(texto)
+
             intencao = identificar_intencao(texto)
+
             busca = base_manager.buscar(resultado_nlp["doc"])
+
             resposta_texto = formatar_resposta(busca)
-            
-            # Fallback final se não encontrar nada
+
+            # fallback final
             if not resposta_texto or len(resposta_texto.strip()) < 30:
-                resposta_texto = " Não encontrei informações sobre isso nos documentos disponíveis. Tente reformular a pergunta."
-            
+
+                resposta_texto = (
+                    "Não encontrei informações sobre isso nos documentos disponíveis. "
+                    "Tente reformular a pergunta."
+                )
+
             intencao_saida = intencao.get("intencao", "GERAL")
 
-        # Cria os registros no banco
-        pergunta = Pergunta.objects.create(descricao_pergunta=texto)
+        # =====================================================
+        # 4. SALVA NO BANCO
+        # =====================================================
+
+        pergunta = Pergunta.objects.create(
+            descricao_pergunta=texto
+        )
+
         resposta = Resposta.objects.create(
             intencao=intencao_saida,
             texto_resposta=resposta_texto,
             tempo_resposta=None
         )
+
         conversa = Conversa.objects.create(
             usuario=usuario,
             pergunta=pergunta,
             resposta=resposta,
             avaliacao=None
         )
+
+        # =====================================================
+        # 5. RETORNO API
+        # =====================================================
 
         return Response({
             "id_pergunta": pergunta.id_pergunta,

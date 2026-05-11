@@ -32,7 +32,7 @@ def extrair_texto_pdf(caminho_pdf):
 
 
 # Dividir texto em chunks
-def dividir_chunks(texto, tamanho=300, sobreposicao=100):
+def dividir_chunks(texto, tamanho=1000, sobreposicao=200):
     """Divide texto preservando parágrafos e evitando cortes em palavras"""
     
     splitter = RecursiveCharacterTextSplitter(
